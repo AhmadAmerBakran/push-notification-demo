@@ -41,7 +41,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// MyHomePage.dart
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
 
@@ -72,11 +71,22 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final notificationService = Provider.of<NotificationService>(context, listen: false);
+    final notificationService = Provider.of<NotificationService>(context);
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
         backgroundColor: Theme.of(context).colorScheme.primary,
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.notifications),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => NotificationsPage()),
+              );
+            },
+          ),
+        ],
       ),
       body: Center(
         child: Column(
@@ -105,6 +115,32 @@ class _MyHomePageState extends State<MyHomePage> {
         onPressed: _incrementCounter,
         tooltip: 'Increment',
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
+
+class NotificationsPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    var notificationService = Provider.of<NotificationService>(context);
+    var messages = notificationService.getNotifications();
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Notifications"),
+      ),
+      body: ListView.builder(
+        itemCount: messages.length,
+        itemBuilder: (context, index) {
+          var message = messages[index];
+          return ListTile(
+            title: Text(message.notification?.title ?? "No title"),
+            subtitle: Text(message.notification?.body ?? "No body"),
+            onTap: () {
+              // Optionally handle navigation or other logic on tap
+            },
+          );
+        },
       ),
     );
   }

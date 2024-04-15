@@ -1,13 +1,13 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
-
 import '../controllers/notification_controller.dart';
 
 class NotificationService {
   FirebaseMessaging messaging = FirebaseMessaging.instance;
+  List<RemoteMessage> messages = []; // List to store incoming notifications
 
   Future<String?> getToken() async {
     String? token = await messaging.getToken();
-    print('FCM Token: $token'); // This will print the token to the console
+    print('FCM Token: $token');
     return token;
   }
 
@@ -25,32 +25,31 @@ class NotificationService {
   }
 
   void setupCallbacks() async {
-    // Handle notifications when the app is in the foreground.
-    FirebaseMessaging.onMessage.listen(NotificationController.onMessage);
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      messages.add(message); // Store the message
+      NotificationController.onMessage(message);
+    });
 
-    // Allow you to do something when a notification have been received while
-    // the app is in the background.
-    FirebaseMessaging.onBackgroundMessage(
-        NotificationController.onBackgroundMessage);
+    FirebaseMessaging.onBackgroundMessage(NotificationController.onBackgroundMessage);
 
-    // Get any messages which caused the application to open from
-    // a terminated state.
-    RemoteMessage? initialMessage =
-    await FirebaseMessaging.instance.getInitialMessage();
-
-    // Handle message if we got one.
+    RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
     if (initialMessage != null) {
+      messages.add(initialMessage); // Store the initial message
       NotificationController.onMessage(initialMessage);
     }
 
-    // Also handle any interaction when the app is in the background via a
-    // Stream listener
-    FirebaseMessaging.onMessageOpenedApp
-        .listen(NotificationController.onMessage);
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      messages.add(message); // Store the message triggered by app opening
+      NotificationController.onMessage(message);
+    });
   }
 
   Stream<String?> get tokenStream async* {
     yield await messaging.getToken();
     yield* messaging.onTokenRefresh;
+  }
+
+  List<RemoteMessage> getNotifications() {
+    return messages;
   }
 }
